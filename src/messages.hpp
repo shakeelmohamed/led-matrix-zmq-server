@@ -138,4 +138,18 @@ MessageT get_message_from_data(const std::span<const std::byte> &data) {
   return msg;
 }
 
+inline const char* get_message_name(MessageId id) {
+  switch (id) {
+    case MessageId::NullReply: return "NullReply";
+    case MessageId::GetBrightnessRequest: return "GetBrightnessRequest";
+    case MessageId::GetBrightnessReply: return "GetBrightnessReply";
+    case MessageId::SetBrightnessRequest: return "SetBrightnessRequest";
+    case MessageId::GetTemperatureRequest: return "GetTemperatureRequest";
+    case MessageId::GetTemperatureReply: return "GetTemperatureReply";
+    case MessageId::SetTemperatureRequest: return "SetTemperatureRequest";
+    case MessageId::GetConfigurationRequest: return "GetConfigurationRequest";
+    case MessageId::GetConfigurationReply: return "GetConfigurationReply";
+    default: return "Unknown";
+  }
+}
 } // namespace lmz

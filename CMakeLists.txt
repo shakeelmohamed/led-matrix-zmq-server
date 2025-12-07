@@ -11,7 +11,15 @@ option(BUILD_VIRTUAL "Build virtual server" OFF)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 set(COMPILE_FEATURES cxx_std_20)
-set(COMPILE_OPTIONS -O3 -Wall -Wextra)
+set(COMPILE_OPTIONS -O0 -g -Wall -Wextra -DDEBUG)
+
+
+# Enable verbose logging in plog
+add_definitions(-DPLOG_GLOBAL_LOG_LEVEL=0)
+
+# Optional: tell code to enable debug blocks
+add_definitions(-DDEBUG)
+
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(ZMQ REQUIRED libzmq cppzmq)

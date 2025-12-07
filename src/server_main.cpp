@@ -113,9 +113,10 @@ static void loop() {
   while (true) {
     zmq::message_t req;
     static_cast<void>(sock.recv(req, zmq::recv_flags::none));
-    sock.send(zmq::message_t(), zmq::send_flags::none);
+    
+    PLOG_INFO << "FRAME: Received frame message - size: " << req.size() << " bytes";    sock.send(zmq::message_t(), zmq::send_flags::none);
 
-    if (req.size() != frame_buffer.size()) {
+    PLOG_INFO << "FRAME: Processing valid frame - updating matrix";    if (req.size() != frame_buffer.size()) {
       PLOG_ERROR << "Received frame of unexpected size: " << req.size() << ", expected "
                  << frame_buffer.size();
       continue;
@@ -124,7 +125,8 @@ static void loop() {
     const std::lock_guard<std::recursive_mutex> guard(matrix_mutex);
     auto data = req.data<const std::byte>();
     frame_buffer.assign(data, data + req.size());
-    update_matrix();
+    
+    PLOG_INFO << "FRAME: Frame processed and matrix updated";    update_matrix();
   }
 }
 
@@ -276,7 +278,7 @@ template <> lmz::GetBrightnessReply process_request(const lmz::GetBrightnessRequ
 }
 
 template <> lmz::NullReply process_request(const lmz::SetBrightnessRequest &req_msg) {
-  PLOG_INFO << "Setting brightness to " << std::to_string(req_msg.args.brightness)
+  PLOG_INFO << "CONTROL: SetBrightness - brightness=" << static_cast<int>(req_msg.args.brightness) << ", transition=" << req_msg.args.transition << "ms";  PLOG_INFO << "Setting brightness to " << std::to_string(req_msg.args.brightness)
             << " with transition " << std::to_string(req_msg.args.transition) << "ms";
 
   transition_task::set_brightness_transition(req_msg.args.brightness, req_msg.args.transition);
@@ -302,7 +304,7 @@ template <> lmz::GetTemperatureReply process_request(const lmz::GetTemperatureRe
 }
 
 template <> lmz::NullReply process_request(const lmz::SetTemperatureRequest &req_msg) {
-  if (req_msg.args.temperature < color_temp::min || req_msg.args.temperature > color_temp::max) {
+  PLOG_INFO << "CONTROL: SetTemperature - temperature=" << req_msg.args.temperature << "K, transition=" << req_msg.args.transition << "ms";  if (req_msg.args.temperature < color_temp::min || req_msg.args.temperature > color_temp::max) {
     PLOG_ERROR << "Received invalid temperature: " << req_msg.args.temperature << "K";
     return lmz::NullReply{};
   }
@@ -323,9 +325,9 @@ template <> lmz::GetConfigurationReply process_request(const lmz::GetConfigurati
 
 template <lmz::IsMessage RequestT> void process_message(const std::span<const std::byte> &data) {
   const auto req_msg = lmz::get_message_from_data<RequestT>(data);
-  const auto reply = process_request<RequestT>(req_msg);
+  PLOG_INFO << "CONTROL: Processing " << lmz::get_message_name(RequestT::id_value);  const auto reply = process_request<RequestT>(req_msg);
   sock.send(zmq::const_buffer(&reply, sizeof(reply)), zmq::send_flags::none);
-}
+  PLOG_INFO << "CONTROL: Sending reply (" << sizeof(reply) << " bytes)";}
 
 static void loop() {
   sock.bind(control_endpoint);
@@ -335,10 +337,11 @@ static void loop() {
   while (true) {
     zmq::message_t req;
     static_cast<void>(sock.recv(req, zmq::recv_flags::none));
-
+    
+    PLOG_INFO << "CONTROL: Received control message - size: " << req.size() << " bytes";
     const auto data = std::span<const std::byte>(req.data<const std::byte>(), req.size());
     const auto id = lmz::get_id_from_data(data);
-
+    PLOG_INFO << "CONTROL: Message ID: " << static_cast<int>(id) << " (" << lmz::get_message_name(id) << ")";
     switch (id) {
     case lmz::MessageId::GetBrightnessRequest: {
       process_message<lmz::GetBrightnessRequest>(data);
