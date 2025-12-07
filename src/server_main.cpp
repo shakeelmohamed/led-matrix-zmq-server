@@ -412,6 +412,8 @@ static void setup(int argc, char *argv[]) {
 
   parser.add_argument("--no-test-pattern").default_value(false).implicit_value(true);
 
+  parser.add_argument("--verbose").default_value(false).implicit_value(true);
+
   parser.parse_args(argc, argv);
 
   if (getuid() != 0) {
@@ -482,6 +484,11 @@ static void setup(int argc, char *argv[]) {
       render_test_pattern();
       update_matrix();
     }
+
+    if (!parser.get<bool>("--verbose")) {
+      plog::get()->setMaxSeverity(plog::verbose);
+    }
+
   }
 
   {
