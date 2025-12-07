@@ -114,6 +114,9 @@ static void loop() {
     zmq::message_t req;
     static_cast<void>(sock.recv(req, zmq::recv_flags::none));
     
+    // TODO: reformat all new debug statements to be in this format
+    // PLOG_VERBOSE_IF(cond) << "verbose";
+    // ideally we can expose a flag for verbose or debug level logging
     PLOG_INFO << "FRAME: Received frame message - size: " << req.size() << " bytes";    sock.send(zmq::message_t(), zmq::send_flags::none);
 
     PLOG_INFO << "FRAME: Processing valid frame - updating matrix";    if (req.size() != frame_buffer.size()) {
@@ -369,6 +372,7 @@ static void loop() {
 
 static void setup(int argc, char *argv[]) {
   static plog::ColorConsoleAppender<plog::TxtFormatter> consoleAppender;
+  // TODO: set verbose level here based on --verbose flog presence
   plog::init(plog::debug, &consoleAppender);
 
   argparse::ArgumentParser parser("led-matrix-zmq-server");
